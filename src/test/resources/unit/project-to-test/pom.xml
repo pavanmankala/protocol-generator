@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.apache.maven.plugin.my.unit</groupId>
+    <artifactId>project-to-test</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>Test MyMojo</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>protocol-generator</artifactId>
+                <configuration>
+                    <protoFile>${basedir}/src/test/resources/RequestMapping.xlsx</protoFile>
+                    <outputDirectory>target/test-harness/project-to-test</outputDirectory>
+                    <sheetColumnMapping>
+                        <DATA_TYPES> RTDataTypeType, RTJavaType </DATA_TYPES>
+                        <FID_TYPES> FidType, FidBase </FID_TYPES>
+                        <FID> FidName, FidType, FidOffset, RTDataTypeType </FID>
+                        <RID_TYPES> RidType, RidBase</RID_TYPES>
+                        <RID> RidName, RidType, RidOffset </RID>
+                    </sheetColumnMapping>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
