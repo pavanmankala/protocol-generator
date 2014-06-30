@@ -1,1 +1,4 @@
-public enum Fid
+$COL_TYPES.getRowObject(0).getColumnName()
+$COL_TYPES.getRowObject(0).getJavaType()
+#set($classType = $classloader.loadClass("java.lang.String"))
+$COL_TYPES.setValue(1, 1, $classType)
