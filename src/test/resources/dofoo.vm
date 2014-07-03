@@ -1,0 +1,4 @@
+Count down.
+#set( $count = 8 )
+#parse( "parsefoo.vm" )
+All done with dofoo.vm!
