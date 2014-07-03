@@ -2,6 +2,9 @@ package com.rtsffm.ertd.proto.gen;
 
 import com.rtsffm.ertd.proto.gen.sheetprocessor.XLSXTableModel;
 
+import org.abstractmeta.toolbox.compilation.compiler.JavaSourceCompiler;
+import org.abstractmeta.toolbox.compilation.compiler.impl.JavaSourceCompilerImpl;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -14,17 +17,21 @@ import org.apache.maven.project.MavenProject;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.app.event.EventCartridge;
+import org.apache.velocity.app.event.implement.ReportInvalidReferences;
+import org.apache.velocity.context.Context;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.log.LogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-
+import org.apache.velocity.util.introspection.Info;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 //~--- JDK imports ------------------------------------------------------------
 
+
 import java.io.File;
 import java.io.StringWriter;
-
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,12 +71,6 @@ public class GenInetProtoMojo extends AbstractMojo implements LogChute {
         required     = true
     )
     private File outputDirectory;
-
-    /**
-     * The package under which the source files will be generated.
-     */
-    @Parameter
-    protected String packageName;
 
     /**
      * The default maven project object.
@@ -126,6 +127,28 @@ public class GenInetProtoMojo extends AbstractMojo implements LogChute {
 
         template.merge(createVelocityContext(sheetColMap), writer);
         getLog().info(writer.toString());
+
+        JavaSourceCompiler                 javaSourceCompiler = new JavaSourceCompilerImpl();
+        JavaSourceCompiler.CompilationUnit compilationUnit    = javaSourceCompiler.createCompilationUnit();
+        String                             javaSourceCode     = "package com.test.foo;\n" + "public class Foo {\n"
+                                                                + "        public static void main(String [] args) {\n"
+                                                                + "            System.out.println(\"Simba\");\n"
+                                                                + "        }\n" + "    }";
+
+        compilationUnit.addJavaSource("com.test.foo.Foo", javaSourceCode);
+
+        ClassLoader classLoader = javaSourceCompiler.compile(compilationUnit);
+
+        getLog().info(System.getProperty("java.class.path"));
+
+        try {
+            Class  fooClass = classLoader.loadClass("com.test.foo.Foo");
+            Method m        = fooClass.getMethod("main", String[].class);
+
+            m.invoke(fooClass, (Object) new String[] { "hello", "hdjd" });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private VelocityContext createVelocityContext(Map<String, List<String>> sheetColMap) {
@@ -143,6 +166,25 @@ public class GenInetProtoMojo extends AbstractMojo implements LogChute {
         }
 
         context.put(CLASS_LOADER, Thread.currentThread().getContextClassLoader());
+
+        EventCartridge ec = new EventCartridge();
+
+        ec.addEventHandler(new ReportInvalidReferences() {
+            @Override
+            public Object invalidGetMethod(Context context, String reference, Object object, String property,
+                                           Info info) {
+                return super.invalidGetMethod(context, reference, object, property, info);
+            }
+            @Override
+            public Object invalidMethod(Context context, String reference, Object object, String method, Info info) {
+                return super.invalidMethod(context, reference, object, method, info);
+            }
+            @Override
+            public boolean invalidSetMethod(Context context, String leftreference, String rightreference, Info info) {
+                return super.invalidSetMethod(context, leftreference, rightreference, info);
+            }
+        });
+        ec.attachToContext(context);
 
         return context;
     }
